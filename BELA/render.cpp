@@ -1,4 +1,4 @@
-/*
+	/*
  ____  _____ _        _    
 | __ )| ____| |      / \   
 |  _ \|  _| | |     / _ \  
@@ -21,19 +21,6 @@ The Bela software is distributed under the GNU Lesser General Public License
 (LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
 */
 
-
-/*
- * AIR-HARP
- * Physically modelled strings using waveguide junctions and mass-spring-dampers
- * controllable using an accelerometer
- *
- * render.cpp
- *
- * Christian Heinrichs 04/2015
- *
- */
-
-
 #include "MassSpringDamper.h"
 #include "String.h"
 #include "Plectrum.h"
@@ -43,35 +30,40 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <stdio.h>
 #include <cstdlib>
 
-#define ACCEL_BUF_SIZE 8
+#define ACCEL_BUF_SIZE 1
 #define NUMBER_OF_STRINGS 9
 
 // PENTATONIC SCALE
 float gMidinotes[NUMBER_OF_STRINGS] = {40,45,50,55,57,60,62,64,67};
+//float gMidinotes[NUMBER_OF_STRINGS] = {63, 70};
+
+int run = 0;
 
 float gInverseSampleRate;
 
-float out_gain = 10.0;
+float out_gain = 1.0f;
 
 int accelPin_x = 0;
 int accelPin_y = 1;
 int accelPin_z = 2;
 
-int c = 0;
+float gPhase = 0.0;
 
 MassSpringDamper msd = MassSpringDamper(1,0.1,10);// (10,0.001,10);
 String strings[NUMBER_OF_STRINGS];
 Plectrum plectrums[NUMBER_OF_STRINGS];
-Waveguide waveguide;
 
 float gPlectrumDisplacement = 0;
-
+int gCount = 0;
 float gAccel_x[ACCEL_BUF_SIZE] = {0};
 int gAccelReadPtr = 0;
+float lastAccel = 1;
+float accel_x = 0;
 
 // DC BLOCK BUTTERWORTH
 
 // Coefficients for 100hz high-pass centre frequency
+
 float a0_l = 0.9899759179893742;
 float a1_l = -1.9799518359787485;
 float a2_l = 0.9899759179893742;
@@ -108,13 +100,15 @@ bool setup(BelaContext *context, void *userData)
 
 		strings[i] = String();
 		strings[i].setMidinote(gMidinotes[i]);
+		//strings[i].wg_l.updateFilterCoeffs(0);
+		//strings[i].wg_r.updateFilterCoeffs(0);
+		
+		//float spacing = 2.0 / (NUMBER_OF_STRINGS+1);
 
-		float spacing = 2.0 / (NUMBER_OF_STRINGS+1);
+		strings[i].setGlobalPosition( 1 /* -1 + spacing*(i+1) */);
 
-		strings[i].setGlobalPosition( -1 + spacing*(i+1) );
-
-		rt_printf("STRING %d // midinote: %f position: %f\n",i,gMidinotes[i],( -1 + spacing*(i+1) ));
-
+		rt_printf("STRING %d // midinote: %f position: %f\n",i,gMidinotes[i],( strings[i].getGlobalPosition() ));
+			
 	}
 
 	return true;
@@ -122,10 +116,9 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
+	gCount++;
 
-	float lastAccel = 0;
-
-	for(int n = 0; n < context->audioFrames; n++) {
+	for(unsigned int n = 0; n < context->audioFrames; ++n) {
 
 		/*
 		 *
@@ -134,22 +127,40 @@ void render(BelaContext *context, void *userData)
 		 */
 
 		// Read accelerometer data from analog input
-		float accel_x = 0;
+		// We are giving an initial pluck by setting lastAccel above.
+		//float accel_x = 0;
 		if(n%2)	{
-			accel_x = (float)context->analogIn[(n/2)*8+accelPin_x] * 2 - 1;	// 15800 - 28300 - 41500
-			lastAccel = accel_x;
-			out_gain = map((float)context->analogIn[(n/2)*8+accelPin_y], 0.3, 1, 0, 10);
+			float lightLevel1 = (float)context->analogIn[(n/2)*8+accelPin_x];
+			float lightLevel2 = (float)context->analogIn[(n/2)*8+accelPin_y];
+			if(lightLevel1 < 0) {
+				accel_x = lightLevel1 * 2 - 1;	// 15800 - 28300 - 41500
+				lastAccel = accel_x;
+				strings[0].wg_l.updateFilterCoeffs(0);
+				strings[0].wg_r.updateFilterCoeffs(0);
+			} else if(lightLevel2 < 0.9) {
+				accel_x = lightLevel2 * 2 - 1;	// 15800 - 28300 - 41500
+				lastAccel = accel_x;
+				strings[1].wg_l.updateFilterCoeffs(0);
+				strings[1].wg_r.updateFilterCoeffs(0);
+			} else {
+			strings[0].wg_l.updateFilterCoeffs(0.5);
+			strings[0].wg_r.updateFilterCoeffs(0.5);
+			strings[1].wg_l.updateFilterCoeffs(0.5);
+			strings[1].wg_r.updateFilterCoeffs(0.5);
+			}
 		} else {
 			// grab previous value if !n%2
 			accel_x = lastAccel;
 		}
+		
 
 		// Dead-zone avoids noise when box is lying horizontally on a surface
-
+		/*
 		float accelDeadZone = 0.1;
 
 		if(accel_x <= accelDeadZone && accel_x >= -accelDeadZone)
 			accel_x = 0;
+		*/
 
 		// Perform smoothing (moving average) on acceleration value
 		if(++gAccelReadPtr >= ACCEL_BUF_SIZE)
@@ -170,6 +181,15 @@ void render(BelaContext *context, void *userData)
 		// The horizontal force (which can be gravity if box is tipped on its side)
 		// is used as the input to a Mass-Spring-Damper model
 		// Plectrum displacement (i.e. when interacting with string) is included
+		//float test = map((float)context->analogIn[(n/2)*8+accelPin_x], 0.3, 1, 0, 1);
+		/*
+		if(run==0) {
+			float massPosition = (float)msd.update(0.1);
+		} else {
+			float massPosition = (float)msd.update(0.15);
+			run = 0;
+		}
+		*/
 		float massPosition = (float)msd.update(gravity - gPlectrumDisplacement);
 
 		float out_l = 0;
@@ -186,16 +206,34 @@ void render(BelaContext *context, void *userData)
 			gPlectrumDisplacement += strings[s].getPlectrumDisplacement();
 
 			// calculate panning based on string position (-1->left / 1->right)
+			/*
 			float panRight = map(stringPosition,1,-1,0.1,1);
 			float panLeft = map(stringPosition,-1,1,0.1,1);
 			panRight *= panRight;
 			panLeft *= panLeft;
+			*/
 
 			float out = strings[s].update(plectrumForce)*gain;
 
-			out_l += out*panLeft;
-			out_r += out*panRight;
-
+			out_l += out;
+			out_r += out;
+			
+			// Every Second 
+			/*
+			if(gCount < 10000){
+				accel_x = 1;
+				lastAccel = 0;
+				strings[s].wg_l.updateFilterCoeffs(0);
+				strings[s].wg_r.updateFilterCoeffs(0);
+			} else if(gCount >= 10000) {
+				accel_x = 0;
+				lastAccel = 1;
+				strings[s].wg_l.updateFilterCoeffs(0.5);
+				strings[s].wg_r.updateFilterCoeffs(0.5);
+			} else {
+				gCount = 0;
+			}
+			*/
 		}
 
 		// APPLY DC-BLOCK FILTER TO OUTPUTS
@@ -221,19 +259,47 @@ void render(BelaContext *context, void *userData)
     	/* shift y1 to y2, result to y1 */
     	y2_r = y1_r;
    	 	y1_r = out_r;
+   	 	
+   	 	float temp_l = out_l;
+   	 	float temp_r = out_r;
+   	 	
+   	 	float filter = map((float)context->analogIn[(n/2)*8+accelPin_x], 0.1, 1, 0, 1);
+   	 	
+   	 	out_l = filter * (out_l + temp_l);
+   	 	out_r = filter * (out_r + temp_r);
+   	 	
+   	 	
+   	 	//Makes tremolo sound like an alien spaceship
+   	 	//float trem = map((float)context->analogIn[(n/2)*8+accelPin_x], 0.3, 1, 100, 500);
+   	 	//float trem = map((float)context->analogIn[(n/2)*8+accelPin_x], 0.1, 1, 0.5, 5);
+   	 	float lfo = sinf(gPhase) * 0.5f;
+   	 	gPhase += 2.0f * (float)M_PI * 440 * gInverseSampleRate;
+   	 	if(gPhase > M_PI)
+   	 		gPhase -= 2.0f * (float)M_PI;
+   	 		
+   	 	//float input_l = audioRead(context, n, 1) * 0.5f;
+   	 	//float input_r = audioRead(context, n, 0) * 0.5f;
+   	 	
+   	 	float out_dl = (out_l*0.5f)*lfo;
+   	 	float out_dr = (out_r*0.5f)*lfo;
 
 		context->audioOut[n * context->audioOutChannels + 1] = out_l * out_gain;
 		context->audioOut[n * context->audioOutChannels + 0] = out_r * out_gain;
+		
+		
 
 	}
 
 }
 
 
-// cleanup_render() is called once at the end, after the audio has stopped.
-// Release any resources that were allocated in initialise_render().
-
 void cleanup(BelaContext *context, void *userData)
-{
+{}
 
-}
+/**
+\example airharp/render.cpp
+
+ * Physically modelled strings using waveguide junctions and mass-spring-dampers
+ * controllable using an accelerometer
+ *
+ */
