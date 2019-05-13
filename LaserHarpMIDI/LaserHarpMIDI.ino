@@ -13,8 +13,8 @@ unsigned long lastDebounceTime[NButtons] = {0};  // the last time the output pin
 unsigned long debounceDelay = 5;    //* the debounce time; increase if the output flickers
 
 // potentiometers
-const int NPots = 1; //*
-int potPin[NPots] = {A0}; //* Pin where the potentiometer is
+const int NPots = 4; //*
+int potPin[NPots] = {A0, A1, A2, A3}; //* Pin where the potentiometer is
 int potCState[NPots] = {0}; // Current state of the pot
 int potPState[NPots] = {0}; // Previous state of the pot
 int potVar = 0; // Difference between the current and previous state of the pot
@@ -28,7 +28,11 @@ boolean potMoving = true; // If the potentiometer is moving
 unsigned long PTime[NPots] = {0}; // Previously stored time
 unsigned long timer[NPots] = {0}; // Stores the time that has elapsed since the timer was reset
 
-bool test = false;
+bool block1 = false;
+bool block2 = false;
+bool block3 = false;
+bool block4 = false;
+//bool block[4] = {false};
 byte midiCh = 1; //* MIDI channel to be used
 byte note = 36; //* Lowest note to be used
 byte cc = 1; //* Lowest MIDI CC to be used
@@ -46,7 +50,7 @@ void setup() {
 
 void loop() {
 
-  buttons();
+  //buttons();
   potentiometers();
 
 }
@@ -101,13 +105,43 @@ void buttons() {
 
 // POTENTIOMETERS
 void potentiometers() {
+  /*
+  potCState[0] = analogRead(potPin[0]);
+  if(potCState[0] > 150) {
+    if(!block1) {
+      MIDI.sendNoteOn(40, 127, 1);
+      block1 = true;
+    } else {
+      midiCState[0] = map(potCState[0], 0, 400, 127, 0); // Maps the reading of the potCState to a value usable in midi
+      MIDI.sendControlChange(1, midiCState[0], midiCh); // cc number, cc value, midi channel
+    }
+  } else {
+    MIDI.sendNoteOn(40, 0, midiCh);
+    block1 = false;
+  }
+  */
 
+  potCState[1] = analogRead(potPin[1]);
+  if(potCState[1] > 150) {
+    if(!block2) {
+      MIDI.sendNoteOn(50, 127, 2);
+      block2 = true;
+    } else {
+      midiCState[1] = map(potCState[1], 0, 400, 127, 0); // Maps the reading of the potCState to a value usable in midi
+      MIDI.sendControlChange(1, midiCState[1], midiCh); // cc number, cc value, midi channel
+    }
+  } else {
+    MIDI.sendNoteOn(50, 0, midiCh);
+    block2 = false;
+  }
 
+  
+  
 
+  /*
   for (int i = 0; i < NPots; i++) { // Loops through all the potentiometers
 
     potCState[i] = analogRead(potPin[i]); // Reads the pot and stores it in the potCState variable
-    /*
     if (potCState[i] > 900) {
       if (!test) {
         MIDI.sendNoteOn(note + i, 127, midiCh + 1); // note, velocity, channel
@@ -118,7 +152,7 @@ void potentiometers() {
       MIDI.sendNoteOn(note + i, 0, midiCh + 1);
       test = false;
     }
-    */
+    
 
     midiCState[i] = map(potCState[i], 0, 400, 127, 0); // Maps the reading of the potCState to a value usable in midi
 
@@ -156,4 +190,5 @@ void potentiometers() {
       }
     }
   }
+  */
 }
