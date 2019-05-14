@@ -32,7 +32,6 @@ bool block1 = false;
 bool block2 = false;
 bool block3 = false;
 bool block4 = false;
-//bool block[4] = {false};
 byte midiCh = 1; //* MIDI channel to be used
 byte note = 36; //* Lowest note to be used
 byte cc = 1; //* Lowest MIDI CC to be used
@@ -49,85 +48,38 @@ void setup() {
 }
 
 void loop() {
-
-  //buttons();
   potentiometers();
-
-}
-
-// BUTTONS
-void buttons() {
-
-  for (int i = 0; i < NButtons; i++) {
-
-    buttonCState[i] = digitalRead(buttonPin[i]);
-    /*
-        // Comment this if you are not using pin 13...
-        if (i == pin13index) {
-          buttonCState[i] = !buttonCState[i]; //inverts pin 13 because it has a pull down resistor instead of a pull up
-        }
-        // ...until here
-    */
-    if ((millis() - lastDebounceTime[i]) > debounceDelay) {
-
-      if (buttonPState[i] != buttonCState[i]) {
-        lastDebounceTime[i] = millis();
-
-        if (buttonCState[i] == LOW) {
-          // use if using with ATmega328 (uno, mega, nano...)
-          //do usbMIDI.sendNoteOn if using with Teensy
-          MIDI.sendNoteOn(note + i, 127, midiCh); // note, velocity, channel
-
-          // use if using with ATmega32U4 (micro, pro micro, leonardo...)
-          //          noteOn(midiCh, note + i, 127);  // channel, note, velocity
-          //          MidiUSB.flush();
-
-          //          Serial.print("button on  >> ");
-          //          Serial.println(i);
-        }
-        else {
-          // use if using with ATmega328 (uno, mega, nano...)
-          //do usbMIDI.sendNoteOn if using with Teensy
-          MIDI.sendNoteOn(note + i, 0, midiCh); // note, velocity, channel
-
-          // use if using with ATmega32U4 (micro, pro micro, leonardo...)
-          //          noteOn(midiCh, note + i, 0);  // channel, note, velocity
-          //          MidiUSB.flush();
-
-          //          Serial.print("button off >> ");
-          //          Serial.println(i);
-        }
-        buttonPState[i] = buttonCState[i];
-      }
-    }
-  }
 }
 
 // POTENTIOMETERS
 void potentiometers() {
-  /*
+
+  delay(1000);
+  
+  
   potCState[0] = analogRead(potPin[0]);
-  if(potCState[0] > 150) {
+  Serial.println(potCState[0]);
+  if(potCState[0] > 900) {
     if(!block1) {
-      MIDI.sendNoteOn(40, 127, 1);
+      MIDI.sendNoteOn(40, 127, midiCh);
       block1 = true;
     } else {
-      midiCState[0] = map(potCState[0], 0, 400, 127, 0); // Maps the reading of the potCState to a value usable in midi
+      midiCState[0] = map(potCState[0], 0, 1027, 127, 0); // Maps the reading of the potCState to a value usable in midi
       MIDI.sendControlChange(1, midiCState[0], midiCh); // cc number, cc value, midi channel
     }
   } else {
     MIDI.sendNoteOn(40, 0, midiCh);
     block1 = false;
   }
-  */
-
+  
   potCState[1] = analogRead(potPin[1]);
-  if(potCState[1] > 150) {
+  //Serial.println(potCState[1]);
+  if(potCState[1] < 350) {
     if(!block2) {
-      MIDI.sendNoteOn(50, 127, 2);
+      MIDI.sendNoteOn(50, 127, midiCh);
       block2 = true;
     } else {
-      midiCState[1] = map(potCState[1], 0, 400, 127, 0); // Maps the reading of the potCState to a value usable in midi
+      midiCState[1] = map(potCState[1], 0, 1027, 127, 0); // Maps the reading of the potCState to a value usable in midi
       MIDI.sendControlChange(1, midiCState[1], midiCh); // cc number, cc value, midi channel
     }
   } else {
@@ -135,60 +87,33 @@ void potentiometers() {
     block2 = false;
   }
 
-  
-  
-
-  /*
-  for (int i = 0; i < NPots; i++) { // Loops through all the potentiometers
-
-    potCState[i] = analogRead(potPin[i]); // Reads the pot and stores it in the potCState variable
-    if (potCState[i] > 900) {
-      if (!test) {
-        MIDI.sendNoteOn(note + i, 127, midiCh + 1); // note, velocity, channel
-        test = true;
-
-      }
+  potCState[2] = analogRead(potPin[2]);
+  //Serial.println(potCState[2]);
+  if(potCState[2] < 900) {
+    if(!block3) {
+      MIDI.sendNoteOn(60, 127, midiCh);
+      block3 = true;
     } else {
-      MIDI.sendNoteOn(note + i, 0, midiCh + 1);
-      test = false;
+      midiCState[2] = map(potCState[2], 0, 1027, 127, 0); // Maps the reading of the potCState to a value usable in midi
+      MIDI.sendControlChange(1, midiCState[2], midiCh); // cc number, cc value, midi channel
     }
-    
-
-    midiCState[i] = map(potCState[i], 0, 400, 127, 0); // Maps the reading of the potCState to a value usable in midi
-
-
-    potVar = abs(potCState[i] - potPState[i]); // Calculates the absolute value between the difference between the current and previous state of the pot
-
-    if (potVar > varThreshold) { // Opens the gate if the potentiometer variation is greater than the threshold
-      PTime[i] = millis(); // Stores the previous time
-    }
-
-    timer[i] = millis() - PTime[i]; // Resets the timer 11000 - 11000 = 0ms
-
-    if (timer[i] < TIMEOUT) { // If the timer is less than the maximum allowed time it means that the potentiometer is still moving
-      potMoving = true;
-    }
-    else {
-      potMoving = false;
-    }
-
-    if (potMoving == true) { // If the potentiometer is still moving, send the change control
-      if (midiPState[i] != midiCState[i]) {
-
-        // use if using with ATmega328 (uno, mega, nano...)
-        //do usbMIDI.sendControlChange if using with Teensy
-        MIDI.sendControlChange(cc + i, midiCState[i], midiCh); // cc number, cc value, midi channel
-
-        // use if using with ATmega32U4 (micro, pro micro, leonardo...)
-        //        controlChange(midiCh, cc + i, midiCState[i]); //  (channel, CC number,  CC value)
-        //        MidiUSB.flush();
-
-
-        //Serial.println(midiCState);
-        potPState[i] = potCState[i]; // Stores the current reading of the potentiometer to compare with the next
-        midiPState[i] = midiCState[i];
-      }
-    }
+  } else {
+    MIDI.sendNoteOn(60, 0, midiCh);
+    block3 = false;
   }
-  */
+
+  potCState[3] = analogRead(potPin[3]);
+  //Serial.println(potCState[3]);
+  if(potCState[3] < 500) {
+    if(!block4) {
+      MIDI.sendNoteOn(70, 127, midiCh);
+      block4 = true;
+    } else {
+      midiCState[3] = map(potCState[3], 0, 1027, 127, 0); // Maps the reading of the potCState to a value usable in midi
+      MIDI.sendControlChange(1, midiCState[3], midiCh); // cc number, cc value, midi channel
+    }
+  } else {
+    MIDI.sendNoteOn(70, 0, midiCh);
+    block4 = false;
+  }
 }
