@@ -1,4 +1,4 @@
-#N canvas 69 68 1278 752 10;
+#N canvas 62 23 1278 752 10;
 #X declare -path patch_editor_abs;
 #X obj 6 708 declare -path patch_editor_abs;
 #N canvas 447 22 707 551 patch-editor-do-not-delete 0;
@@ -5452,14 +5452,16 @@ for more details.;
 -262144 -1 -1;
 #X obj 10 89 bng 15 250 50 0 SAVE-S SAVE-R <--SAVE!(enter) 17 7 0 10
 -262144 -4034 -1;
-#X obj 242 533 maestro4 1;
-#X obj 734 182 adsr 1;
-#X obj 464 62 midi-in 2;
-#X obj 448 232 basic-osc 4;
-#X obj 749 363 vca 2;
-#X obj 769 514 combfilter 1;
+#X obj 395 399 maestro4 1;
+#X obj 724 108 adsr 1;
+#X obj 600 25 midi-in 2;
+#X obj 473 127 basic-osc 4;
+#X obj 618 265 vca 2;
+#X obj 733 358 combfilter 1;
 #X connect 10 0 13 1;
 #X connect 11 0 12 0;
 #X connect 11 1 10 0;
 #X connect 12 0 13 0;
 #X connect 13 0 9 0;
+#X connect 13 0 14 0;
+#X connect 14 0 9 2;
