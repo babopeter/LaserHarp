@@ -1,4 +1,4 @@
-#N canvas 175 138 1278 752 10;
+#N canvas 69 68 1278 752 10;
 #X declare -path patch_editor_abs;
 #X obj 6 708 declare -path patch_editor_abs;
 #N canvas 447 22 707 551 patch-editor-do-not-delete 0;
@@ -188,7 +188,7 @@
 #X msg 177 60 0;
 #X msg 83 341 \; pd-main.pd obj 200 200 \$1 \$2;
 #X obj 162 280 nbx 5 14 -1e+37 1e+37 0 1 empty empty empty 0 -8 0 10
--262144 -1 -1 3 256;
+-262144 -1 -1 4 256;
 #X obj 64 387 t b b;
 #X msg 64 509 loadbang;
 #X obj 91 411 s SAVE-S;
@@ -1218,7 +1218,7 @@
 #X msg 177 81 0;
 #X msg 83 341 \; pd-main.pd obj 200 200 \$1 \$2;
 #X obj 162 280 nbx 5 14 -1e+37 1e+37 0 1 empty empty empty 0 -8 0 10
--262144 -1 -1 0 256;
+-262144 -1 -1 1 256;
 #X obj 64 387 t b b;
 #X msg 64 509 loadbang;
 #X obj 91 411 s SAVE-S;
@@ -1758,7 +1758,7 @@
 #X msg 177 81 0;
 #X msg 83 341 \; pd-main.pd obj 200 200 \$1 \$2;
 #X obj 162 280 nbx 5 14 -1e+37 1e+37 0 1 empty empty empty 0 -8 0 10
--262144 -1 -1 1 256;
+-262144 -1 -1 2 256;
 #X obj 64 387 t b b;
 #X msg 64 509 loadbang;
 #X obj 91 411 s SAVE-S;
@@ -2138,7 +2138,7 @@
 #X msg 177 81 0;
 #X msg 83 341 \; pd-main.pd obj 200 200 \$1 \$2;
 #X obj 162 280 nbx 5 14 -1e+37 1e+37 0 1 empty empty empty 0 -8 0 10
--262144 -1 -1 0 256;
+-262144 -1 -1 1 256;
 #X obj 64 387 t b b;
 #X msg 64 509 loadbang;
 #X obj 91 411 s SAVE-S;
@@ -2626,7 +2626,7 @@
 #X msg 177 81 0;
 #X msg 83 341 \; pd-main.pd obj 200 200 \$1 \$2;
 #X obj 162 280 nbx 5 14 -1e+37 1e+37 0 1 empty empty empty 0 -8 0 10
--262144 -1 -1 1 256;
+-262144 -1 -1 2 256;
 #X obj 64 387 t b b;
 #X msg 64 509 loadbang;
 #X obj 91 411 s SAVE-S;
@@ -5223,7 +5223,7 @@ for more details.;
 #X msg 177 81 0;
 #X msg 83 341 \; pd-main.pd obj 200 200 \$1 \$2;
 #X obj 162 280 nbx 5 14 -1e+37 1e+37 0 1 empty empty empty 0 -8 0 10
--262144 -1 -1 1 256;
+-262144 -1 -1 2 256;
 #X obj 64 387 t b b;
 #X msg 64 509 loadbang;
 #X obj 91 411 s SAVE-S;
@@ -5452,23 +5452,14 @@ for more details.;
 -262144 -1 -1;
 #X obj 10 89 bng 15 250 50 0 SAVE-S SAVE-R <--SAVE!(enter) 17 7 0 10
 -262144 -4034 -1;
-#X obj 225 171 basic-osc 3;
-#X obj 218 317 lp-filter 1;
-#X obj 211 434 vca 1;
 #X obj 242 533 maestro4 1;
-#X obj 808 103 clock 1;
-#X obj 806 217 mega-sequencer 1;
-#X obj 546 83 ahr 1;
-#X obj 586 402 ahr 2;
-#X obj 214 13 basic-lfo 1;
-#X obj 769 12 midi-in 1;
-#X connect 9 0 10 0;
-#X connect 10 0 11 0;
+#X obj 734 182 adsr 1;
+#X obj 464 62 midi-in 2;
+#X obj 448 232 basic-osc 4;
+#X obj 749 363 vca 2;
+#X obj 769 514 combfilter 1;
+#X connect 10 0 13 1;
 #X connect 11 0 12 0;
-#X connect 13 0 14 0;
-#X connect 13 0 15 0;
-#X connect 13 0 16 0;
-#X connect 14 0 9 0;
-#X connect 15 0 11 1;
-#X connect 16 0 10 1;
-#X connect 17 0 9 1;
+#X connect 11 1 10 0;
+#X connect 12 0 13 0;
+#X connect 13 0 9 0;
