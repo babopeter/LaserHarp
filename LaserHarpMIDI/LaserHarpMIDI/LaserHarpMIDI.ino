@@ -31,9 +31,9 @@ void setup() {
 }
 
 void loop() {
-  float latency = millis();
+  //float latency = millis();
   potentiometers();
-  Serial.println(latency-millis());
+  //Serial.println(latency-millis());
 }
 
 // POTENTIOMETERS
